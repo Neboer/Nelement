@@ -1,0 +1,55 @@
+name: APK Build
+
+on:
+  pull_request: { }
+  push:
+    branches: [ main, develop ]
+
+# Enrich gradle.properties for CI/CD
+env:
+  GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx3072m -Dfile.encoding=UTF-8 -XX:+HeapDumpOnOutOfMemoryError -XX:MaxMetaspaceSize=1g" -Dkotlin.daemon.jvm.options="-Xmx2560m" -Dkotlin.incremental=false
+  CI_GRADLE_ARG_PROPERTIES: --stacktrace -PpreDexEnable=false --max-workers 2 --no-daemon
+
+
+jobs:
+  release-fdroid:
+    name: Build unsigned Fdroid release APKs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '21'
+      - name: Configure gradle
+        uses: gradle/actions/setup-gradle@v3
+      - name: Assemble Fdroid release apk
+        run: ./gradlew assembleFdroidRelease $CI_GRADLE_ARG_PROPERTIES
+      - name: Upload Fdroid release APKs
+        uses: actions/upload-artifact@v3
+        with:
+          name: vector-Fdroid-release
+          path: |
+            vector-app/build/outputs/apk/*/release/*.apk
+
+  release-gplay:
+    name: Build unsigned GPlay release APKs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '21'
+      - name: Configure gradle
+        uses: gradle/actions/setup-gradle@v3
+      - name: Assemble GPlay unsigned apk
+        run: ./gradlew clean assembleGplayRelease $CI_GRADLE_ARG_PROPERTIES
+      - name: Upload Gplay unsigned APKs
+        uses: actions/upload-artifact@v3
+        with:
+          name: vector-gplay-release-unsigned
+          path: |
+            vector-app/build/outputs/apk/*/release/*.apk
