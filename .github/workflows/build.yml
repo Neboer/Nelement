@@ -48,7 +48,7 @@ jobs:
       - name: Assemble GPlay unsigned apk
         run: ./gradlew clean assembleGplayRelease $CI_GRADLE_ARG_PROPERTIES
       - name: Upload Gplay unsigned APKs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: vector-gplay-release-unsigned
           path: |
