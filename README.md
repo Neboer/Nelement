@@ -39,14 +39,6 @@ Nelement主要修改了Element Android的四处代码：
 
 我们还对Nelement做了一些其他的适配性小修改，比如修改google-services.json中的包名、修改manifest文件中注册的，以及使用Neboer自己的密钥对Nelement进行签名、修改Element的版本号等等。
 
-## 构建与发布
-
-- 当前基于 Element Android 稳定版 `v1.6.66`，保留 Nelement 的包名、品牌及自建服务配置。
-- `APK Build` workflow 支持分支推送、`v*` 标签和手动触发，分别生成 F-Droid 与 GPlay 的未签名 release APK。
-- 发布使用指向 Nelement 提交的标签（例如 `v1.6.66-nelement.1`），不覆盖 Element 上游同名标签；标签构建包含完整 Git 历史，避免正式 APK 带上 `-dev` 后缀。
-- 从对应 Actions run 下载两个 artifact，在本机使用发布密钥签名。发布前验证全部 APK 的签名、包名、版本和 ABI，并与上一版签名证书比对；密钥和密码不得上传到仓库或 Actions。
-- Release 沿用每种渠道 5 个 APK（`armeabi-v7a`、`arm64-v8a`、`x86`、`x86_64`、`universal`）的格式，并链接对应上游 release。
-
 以下是原README文件内容。
 
 [![Latest build](https://github.com/element-hq/element-android/actions/workflows/build.yml/badge.svg?query=branch%3Adevelop)](https://github.com/element-hq/element-android/actions/workflows/build.yml?query=branch%3Adevelop)
