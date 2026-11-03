@@ -14,6 +14,10 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.airbnb.mvrx.activityViewModel
@@ -33,12 +37,18 @@ import im.vector.app.core.resources.ColorProvider
 import im.vector.app.core.ui.views.CurrentCallsView
 import im.vector.app.core.ui.views.CurrentCallsViewPresenter
 import im.vector.app.core.ui.views.KeysBackupBanner
+import im.vector.app.core.ui.views.VerifyDeviceBanner
+import im.vector.app.core.utils.openApplicationStore
+import im.vector.app.core.utils.openUrlInChromeCustomTab
 import im.vector.app.databinding.FragmentNewHomeDetailBinding
 import im.vector.app.features.call.SharedKnownCallsViewModel
 import im.vector.app.features.call.VectorCallActivity
 import im.vector.app.features.call.dialpad.PstnDialActivity
 import im.vector.app.features.call.webrtc.WebRtcCallManager
 import im.vector.app.features.crypto.verification.self.SelfVerificationBottomSheet
+import im.vector.app.features.elementx.MigrationBannerAction
+import im.vector.app.features.elementx.MigrationBannerState
+import im.vector.app.features.elementx.MigrationBannerViewModel
 import im.vector.app.features.home.room.list.UnreadCounterBadgeView
 import im.vector.app.features.home.room.list.actions.RoomListSharedAction
 import im.vector.app.features.home.room.list.actions.RoomListSharedActionViewModel
@@ -66,7 +76,8 @@ class NewHomeDetailFragment :
         KeysBackupBanner.Delegate,
         CurrentCallsView.Callback,
         OnBackPressed,
-        VectorMenuProvider {
+        VectorMenuProvider,
+        VerifyDeviceBanner.Delegate {
 
     @Inject lateinit var avatarRenderer: AvatarRenderer
     @Inject lateinit var colorProvider: ColorProvider
@@ -80,6 +91,7 @@ class NewHomeDetailFragment :
     private val newHomeDetailViewModel: NewHomeDetailViewModel by fragmentViewModel()
     private val unknownDeviceDetectorSharedViewModel: UnknownDeviceDetectorSharedViewModel by activityViewModel()
     private val serverBackupStatusViewModel: ServerBackupStatusViewModel by activityViewModel()
+    private val migrationBannerViewModel: MigrationBannerViewModel by activityViewModel()
 
     private lateinit var sharedActionViewModel: HomeSharedActionViewModel
     private lateinit var sharedRoomListActionViewModel: RoomListSharedActionViewModel
@@ -131,7 +143,9 @@ class NewHomeDetailFragment :
         sharedActionViewModel = activityViewModelProvider.get(HomeSharedActionViewModel::class.java)
         sharedCallActionViewModel = activityViewModelProvider.get(SharedKnownCallsViewModel::class.java)
         setupToolbar()
+        setupMigrationBanner()
         setupKeysBackupBanner()
+        setupVerificationBanner()
         setupActiveCallView()
         setupDebugButton()
         setupFabs()
@@ -231,6 +245,7 @@ class NewHomeDetailFragment :
         super.onResume()
         callManager.checkForProtocolsSupportIfNeeded()
         refreshSpaceState()
+        migrationBannerViewModel.handle(MigrationBannerAction.OnResume)
     }
 
     private fun refreshSpaceState() {
@@ -323,6 +338,10 @@ class NewHomeDetailFragment :
         views.homeKeysBackupBanner.delegate = this
     }
 
+    private fun setupVerificationBanner() {
+        views.homeVerifyDevice.delegate = this
+    }
+
     private fun setupActiveCallView() {
         currentCallsViewPresenter.bind(views.currentCallsView, this)
     }
@@ -336,6 +355,41 @@ class NewHomeDetailFragment :
         views.avatar.debouncedClicks {
             navigator.openSettings(requireContext())
         }
+    }
+
+    private fun setupMigrationBanner() {
+        val bannerContainer = views.viewDownloadReplacementAppRoomListContainer
+        val icon = bannerContainer.findViewById<ImageView>(R.id.view_download_replacement_app_room_list_icon)
+        val title = bannerContainer.findViewById<TextView>(R.id.view_download_replacement_app_room_list_title)
+        val body = bannerContainer.findViewById<TextView>(R.id.view_download_replacement_app_room_list_body)
+        val button = bannerContainer.findViewById<Button>(R.id.view_download_replacement_app_room_list_button)
+        bannerContainer.findViewById<View>(
+                R.id.view_download_replacement_app_room_list_button_close
+        ).debouncedClicks {
+            migrationBannerViewModel.handle(MigrationBannerAction.Close)
+        }
+        migrationBannerViewModel
+                .onEach {
+                    when (val bannerState = it.bannerState) {
+                        MigrationBannerState.Hide -> bannerContainer.isGone = true
+                        is MigrationBannerState.Show -> {
+                            bannerContainer.isVisible = true
+                            // Only advertise the Element X logo when the target really is Element X.
+                            icon.isVisible = bannerState.isElementX
+                            title.text = bannerState.title
+                            body.text = bannerState.body
+                            button.isVisible = bannerState.showButton
+                            button.text = bannerState.buttonText
+                            button.setOnClickListener {
+                                openApplicationStore(
+                                        activity = requireActivity(),
+                                        buildMeta = buildMeta,
+                                        appId = bannerState.targetAppId,
+                                )
+                            }
+                        }
+                    }
+                }
     }
 
     private fun openSpaceSettings() = withState(viewModel) { viewState ->
@@ -355,9 +409,9 @@ class NewHomeDetailFragment :
         })
     }
 
-/* ==========================================================================================
- * KeysBackupBanner Listener
- * ========================================================================================== */
+    /* ==========================================================================================
+     * KeysBackupBanner Listener
+     * ========================================================================================== */
 
     override fun onCloseClicked() {
         serverBackupStatusViewModel.handle(ServerBackupStatusAction.OnBannerClosed)
@@ -378,7 +432,7 @@ class NewHomeDetailFragment :
                 it.pushCounter,
                 vectorPreferences.developerShowDebugInfo()
         )
-
+        views.homeVerifyDevice.isVisible = it.showVerifyDeviceBanner
         refreshAvatar()
         hasUnreadRooms = it.hasUnreadMessages
     }
@@ -418,6 +472,21 @@ class NewHomeDetailFragment :
     }
 
     private fun SpaceStateHandler.isRoot() = getSpaceBackstack().isEmpty()
+
+    override fun onVerificationLearnMoreClicked() {
+        openUrlInChromeCustomTab(
+                context = requireContext(),
+                session = null,
+                url = "https://docs.element.io/latest/element-support/device-verification/how-to-verify-devices",
+        )
+    }
+
+    override fun onVerifySession() {
+        (activity as? VectorBaseActivity<*>)?.let { vectorBaseActivity ->
+            vectorBaseActivity.navigator
+                    .requestSelfSessionVerification(vectorBaseActivity)
+        }
+    }
 
     companion object {
         private const val HOME_ROOM_LIST_FRAGMENT_TAG = "TAG_HOME_ROOM_LIST"

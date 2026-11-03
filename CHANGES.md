@@ -1,3 +1,101 @@
+Changes in Element v1.6.66 (2026-09-25)
+=======================================
+
+Other changes
+-------------
+- Update the banner for excluding insecure devices. ([#9172](https://github.com/element-hq/element-android/issues/9172))
+
+Changes in Element v1.6.64 (2026-09-17)
+=======================================
+
+Features ✨
+----------
+ - Add a banner in the room list inviting users to migrate to Element X, configurable via the homeserver .well-known file. ([#9167](https://github.com/element-hq/element-android/issues/9167))
+
+SDK API changes ⚠️
+------------------
+ - RawService: cache definitive "not found" (404/410) answers for the same duration as successful ones, so that a url which is known to be missing is not requested again on every call. ([#9167](https://github.com/element-hq/element-android/issues/9167))
+
+Other changes
+-------------
+ - Target SDK 36. ([#9162](https://github.com/element-hq/element-android/pull/9162))
+
+
+Changes in Element v1.6.62 (2026-07-21)
+=======================================
+
+Security fixes 🔐
+-----------------
+
+This release contains a security fix:
+
+ - Improve sanitization of file storage location ([#9157](https://github.com/element-hq/element-android/issues/9157))
+  This is part of a security fix ([GHSA-fr74-76wm-x6pp](https://github.com/matrix-org/matrix-android-sdk2/security/advisories/GHSA-fr74-76wm-x6pp)).
+
+Changes in Element v1.6.60 (2026-06-24)
+=======================================
+
+Other changes
+-------------
+ - Show "Verify this device" banner on un-verified devices. ([#9141](https://github.com/element-hq/element-android/issues/9141))
+
+
+Changes in Element v1.6.58 (2026-05-13)
+=======================================
+
+Security fixes 🔐
+-----------------
+
+This release contains an important security fix:
+
+- Check the user ID in the `sender_device_keys` property of Olm-encrypted to-device events to prevent sender spoofing by homeserver owners. ([#6553](https://github.com/matrix-org/matrix-rust-sdk/pull/6553), High, [CVE-2026-45056](https://www.cve.org/CVERecord?id=CVE-2026-45056), [GHSA-wfq4-36m3-9g42](https://github.com/matrix-org/matrix-rust-sdk/security/advisories/GHSA-wfq4-36m3-9g42))
+
+Other changes
+-------------
+- Bump org.matrix.rustcomponents:crypto-android from 26.1.28 to 26.05.12 ([#9143](https://github.com/element-hq/element-android/issues/9143))
+
+Changes in Element v1.6.56 (2026-04-29)
+=======================================
+
+Features ✨
+----------
+ - Expose service to let Element X access some internal data ([#9109](https://github.com/element-hq/element-android/issues/9109))
+
+Bugfixes 🐛
+----------
+ - Fix "Cannot find secrets in storage" error when using "Reset everything" to reset verification keys. ([#8917](https://github.com/element-hq/element-android/issues/8917)) ([#8917](https://github.com/element-hq/element-android/issues/8917))
+
+Other changes
+-------------
+ - Temporary hide "Verify this device" banner. ([#9130](https://github.com/element-hq/element-android/issues/9130))
+
+Changes in Element v1.6.52 (2026-03-05)
+=======================================
+
+Other changes
+-------------
+ - Bump `jitsi_modile_sdk` to v11.5.1 ([#9124](https://github.com/element-hq/element-android/issues/9124)). This should fix the 16KB page size incompatibility.
+
+Changes in Element v1.6.50 (2026-02-04)
+=======================================
+
+Other changes
+-------------
+ - Update the default bug reporting URL. ([#9097](https://github.com/element-hq/element-android/issues/9097))
+ - Update OAuth-awareness to support the stable version of MSC3824. ([#9102](https://github.com/element-hq/element-android/issues/9102))
+ - Update realm plugin to 10.19.0 ([#9111](https://github.com/element-hq/element-android/issues/9116))
+ - Bump org.matrix.rustcomponents:crypto-android from 26.1.22 to 26.1.28 ([#9114](https://github.com/element-hq/element-android/issues/9114))
+ - Update sentry to version 8.31.0 ([#9115](https://github.com/element-hq/element-android/issues/9115))
+ - Update Maplibre dependency to version 11.6.1 ([#9116](https://github.com/element-hq/element-android/issues/9116))
+ - Remove flipper from the codebase. ([#9117](https://github.com/element-hq/element-android/issues/9117))
+
+Changes in Element v1.6.48 (2025-10-15)
+=======================================
+
+Other changes
+-------------
+ - Change the app name to Element Classic. ([#9094](https://github.com/element-hq/element-android/issues/9094))
+
 Changes in Element v1.6.46 (2025-09-22)
 =======================================
 

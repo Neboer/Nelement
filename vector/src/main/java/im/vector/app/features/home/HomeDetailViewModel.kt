@@ -61,7 +61,8 @@ class HomeDetailViewModel @AssistedInject constructor(
         private val directRoomHelper: DirectRoomHelper,
         private val spaceStateHandler: SpaceStateHandler,
         private val autoAcceptInvites: AutoAcceptInvites,
-        private val vectorOverrides: VectorOverrides
+        private val vectorOverrides: VectorOverrides,
+        private val showVerifyDeviceBannerChecker: ShowVerifyDeviceBannerChecker,
 ) : VectorViewModel<HomeDetailViewState, HomeDetailAction, HomeDetailViewEvents>(initialState),
         CallProtocolsChecker.Listener {
 
@@ -93,11 +94,29 @@ class HomeDetailViewModel @AssistedInject constructor(
         observeRoomSummaries()
         updatePstnSupportFlag()
         observeDataStore()
+        observeCrossSigningState()
         callManager.addProtocolsCheckerListener(this)
         session.flow().liveUser(session.myUserId).execute {
             copy(
                     myMatrixItem = it.invoke()?.getOrNull()?.toMatrixItem()
             )
+        }
+    }
+
+    private fun observeCrossSigningState() {
+        if (showVerifyDeviceBannerChecker.canShowVerifyDeviceBanner(session.myUserId)) {
+            session
+                    .flow()
+                    .liveCrossSigningInfo(session.myUserId)
+                    .onEach { info ->
+                        val isVerified = info.getOrNull()?.isTrusted() ?: false
+                        setState {
+                            copy(
+                                    showVerifyDeviceBanner = !isVerified,
+                            )
+                        }
+                    }
+                    .launchIn(viewModelScope)
         }
     }
 
